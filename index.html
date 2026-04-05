@@ -3,11 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>Intranet Escolar</title>
+<title>Intranet Escolar PRO</title>
 
 <link rel="stylesheet" href="style.css">
-
 </head>
 
 <body>
@@ -16,24 +14,17 @@
 
 <div class="container">
 
-<!-- LOGIN -->
-<div id="login" class="card">
+<div id="loginDiv" class="card">
 <h3>Ingreso</h3>
-
-<input id="usuario" placeholder="DNI o Usuario">
-<input id="password" type="password" placeholder="Contraseña">
-
+<input id="usuario">
+<input id="password" type="password">
 <button onclick="login()">Ingresar</button>
 </div>
 
-<!-- PANEL -->
 <div id="panel" class="hidden">
-
 <h3 id="bienvenida"></h3>
 <button onclick="logout()">Cerrar sesión</button>
-
 <div id="contenido"></div>
-
 </div>
 
 </div>
