@@ -3,220 +3,181 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Intranet Escolar</title>
+<title>Intranet Escolar PRO</title>
 
 <style>
-body{
-  font-family:Arial;
-  margin:0;
-  background:#eef2f7;
-}
-
-header{
-  background:#2d89ef;
-  color:white;
-  padding:15px;
-  text-align:center;
-  font-size:20px;
-}
-
-.container{
-  padding:15px;
-}
+body{font-family:Arial;background:#eef2f7;margin:0}
+header{background:#2d89ef;color:white;padding:15px;text-align:center}
+.container{padding:15px}
 
 .card{
   background:white;
   padding:15px;
   margin:10px 0;
-  border-radius:12px;
-  box-shadow:0 3px 8px rgba(0,0,0,0.1);
+  border-radius:10px;
+  box-shadow:0 2px 6px rgba(0,0,0,0.1)
 }
 
 input,textarea,select,button{
   width:100%;
-  margin:6px 0;
   padding:10px;
-  border-radius:8px;
-  border:1px solid #ccc;
+  margin:5px 0;
+  border-radius:6px;
 }
 
 button{
   background:#2d89ef;
   color:white;
   border:none;
-  cursor:pointer;
-}
-
-button:hover{
-  background:#1b5fa7;
 }
 
 .hidden{display:none}
-
-.badge{
-  background:#2d89ef;
-  color:white;
-  padding:3px 8px;
-  border-radius:6px;
-  font-size:12px;
-}
 </style>
 </head>
 
 <body>
 
-<header>📚 Intranet Escolar</header>
+<header>📚 Intranet Escolar PRO</header>
 
 <div class="container">
 
-<!-- MENU -->
-<div id="menu">
-  <button onclick="mostrar('docente')">👨‍🏫 Docente</button>
-  <button onclick="mostrar('padre')">👨‍👩‍👧 Padres</button>
-</div>
-
-<!-- DOCENTE -->
-<div id="docente" class="hidden">
-
-<div class="card">
-<h3>Acceso Docente</h3>
-<input type="password" id="clave" placeholder="Contraseña">
+<!-- LOGIN PADRES -->
+<div id="loginPadre" class="card">
+<h3>Ingreso Padres</h3>
+<input id="dni" placeholder="DNI">
 <button onclick="login()">Ingresar</button>
 </div>
 
-<div id="panelAdmin" class="hidden">
+<!-- PANEL PADRE -->
+<div id="panelPadre" class="hidden">
+<h3 id="nombre"></h3>
+<div id="lista"></div>
+</div>
 
+<!-- DOCENTE -->
 <div class="card">
-<h3>Nuevo Comunicado</h3>
+<h3>Panel Docente</h3>
+<input type="password" id="clave" placeholder="Clave">
+<button onclick="loginDoc()">Ingresar</button>
+
+<div id="admin" class="hidden">
+
 <input id="titulo" placeholder="Título">
 <textarea id="mensaje" placeholder="Mensaje"></textarea>
-
+<input id="archivo" placeholder="Link PDF o imagen">
 <select id="grado">
-<option value="">Seleccionar grado</option>
-<option>Inicial</option>
 <option>Primaria</option>
 <option>Secundaria</option>
 </select>
 
-<button onclick="guardarComunicado()">Publicar</button>
-</div>
+<button onclick="publicar()">Publicar</button>
+
+<button onclick="verRespuestas()">Ver Respuestas</button>
+
+<div id="respuestas"></div>
 
 </div>
-</div>
-
-<!-- PADRES -->
-<div id="padre" class="hidden">
-
-<div class="card">
-<h3>Acceso Padres</h3>
-<input id="dni" placeholder="DNI">
-<select id="gradoPadre">
-<option value="">Seleccionar grado</option>
-<option>Inicial</option>
-<option>Primaria</option>
-<option>Secundaria</option>
-</select>
-
-<button onclick="cargar()">Ver Comunicados</button>
-</div>
-
-<div id="lista"></div>
-
 </div>
 
 </div>
 
 <script>
-const API = "https://script.google.com/macros/s/AKfycbyNn2Wn7XtbWeHX-fZqYIs6Peoy2KsKb33LBGQsNrXQhxgeUdv6547vGNnCadUQcvwN5w/exec";
+const API="https://script.google.com/macros/s/AKfycbyNn2Wn7XtbWeHX-fZqYIs6Peoy2KsKb33LBGQsNrXQhxgeUdv6547vGNnCadUQcvwN5w/exec";
 
-// navegación
-function mostrar(id){
-  document.getElementById("docente").classList.add("hidden");
-  document.getElementById("padre").classList.add("hidden");
-  document.getElementById(id).classList.remove("hidden");
-}
-
-// login simple
+// LOGIN PADRE
 function login(){
-  if(clave.value==="1234"){
-    panelAdmin.classList.remove("hidden");
-  }else{
-    alert("Clave incorrecta");
-  }
+  fetch(API+"?action=loginPadre&dni="+dni.value)
+  .then(r=>r.json())
+  .then(data=>{
+    if(data.error){
+      alert("No registrado");
+      return;
+    }
+
+    nombre.innerHTML="Bienvenido "+data.nombre;
+    loginPadre.classList.add("hidden");
+    panelPadre.classList.remove("hidden");
+
+    cargar(data.grado, data.dni);
+  });
 }
 
-// guardar comunicado
-function guardarComunicado(){
-
-  if(!titulo.value || !mensaje.value || !grado.value){
-    alert("Completa todos los campos");
-    return;
-  }
-
-  fetch(API,{
-    method:"POST",
-    body:JSON.stringify({
-      action:"guardarComunicado",
-      titulo:titulo.value,
-      mensaje:mensaje.value,
-      grado:grado.value
-    })
-  })
-  .then(()=>alert("Comunicado publicado"));
-}
-
-// cargar comunicados
-function cargar(){
-
-  if(!dni.value || !gradoPadre.value){
-    alert("Completa datos");
-    return;
-  }
-
-  fetch(API)
+// CARGAR COMUNICADOS
+function cargar(gradoUser,dniUser){
+  fetch(API+"?action=comunicados")
   .then(r=>r.json())
   .then(data=>{
 
     lista.innerHTML="";
 
-    const filtrados = data.filter(c => c.grado === gradoPadre.value);
-
-    filtrados.forEach(c=>{
+    data.filter(c=>c.grado==gradoUser)
+    .forEach(c=>{
 
       lista.innerHTML+=`
       <div class="card">
-        <span class="badge">${c.grado}</span>
-        <h4>${c.titulo}</h4>
-        <p>${c.mensaje}</p>
+      <h4>${c.titulo}</h4>
+      <p>${c.mensaje}</p>
 
-        <textarea id="r${c.id}" placeholder="Responder"></textarea>
-        <button onclick="responder(${c.id})">Enviar</button>
-      </div>
-      `;
+      ${c.archivo ? `<a href="${c.archivo}" target="_blank">📎 Ver archivo</a>`:""}
+
+      <textarea id="r${c.id}" placeholder="Responder"></textarea>
+      <button onclick="responder(${c.id},'${dniUser}')">Enviar</button>
+      </div>`;
     });
 
   });
 }
 
-// responder
-function responder(id){
-  const texto = document.getElementById("r"+id).value;
-
-  if(!texto){
-    alert("Escribe una respuesta");
-    return;
-  }
+// RESPONDER
+function responder(id,dni){
+  const texto=document.getElementById("r"+id).value;
 
   fetch(API,{
     method:"POST",
     body:JSON.stringify({
       action:"guardarRespuesta",
       idComunicado:id,
-      dni:dni.value,
+      dni:dni,
       respuesta:texto
     })
-  })
-  .then(()=>alert("Respuesta enviada"));
+  }).then(()=>alert("Enviado"));
+}
+
+// DOCENTE LOGIN
+function loginDoc(){
+  if(clave.value==="1234"){
+    admin.classList.remove("hidden");
+  }
+}
+
+// PUBLICAR
+function publicar(){
+  fetch(API,{
+    method:"POST",
+    body:JSON.stringify({
+      action:"guardarComunicado",
+      titulo:titulo.value,
+      mensaje:mensaje.value,
+      grado:grado.value,
+      archivo:archivo.value
+    })
+  }).then(()=>alert("Publicado"));
+}
+
+// VER RESPUESTAS
+function verRespuestas(){
+  fetch(API+"?action=respuestas")
+  .then(r=>r.json())
+  .then(data=>{
+    respuestas.innerHTML="<h4>Respuestas:</h4>";
+    data.forEach(r=>{
+      respuestas.innerHTML+=`
+      <div class="card">
+      DNI: ${r[2]}<br>
+      ${r[3]}
+      </div>`;
+    });
+  });
 }
 </script>
 
