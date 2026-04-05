@@ -2,34 +2,29 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Intranet Escolar PRO</title>
-
+<title>Intranet</title>
 <link rel="stylesheet" href="style.css">
 </head>
-
 <body>
 
-<header>📚 Intranet Escolar</header>
+<header>Intranet Escolar</header>
 
 <div class="container">
 
 <div id="loginDiv" class="card">
-<h3>Ingreso</h3>
-<input id="usuario">
+<input id="usuario" placeholder="Usuario o DNI">
 <input id="password" type="password">
 <button onclick="login()">Ingresar</button>
 </div>
 
 <div id="panel" class="hidden">
 <h3 id="bienvenida"></h3>
-<button onclick="logout()">Cerrar sesión</button>
+<button onclick="logout()">Salir</button>
 <div id="contenido"></div>
 </div>
 
 </div>
 
 <script src="app.js"></script>
-
 </body>
 </html>
