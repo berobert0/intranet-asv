@@ -6,131 +6,217 @@
 <title>Intranet Escolar</title>
 
 <style>
-body{font-family:Arial;background:#f2f4f7;margin:0;padding:20px}
-h2{text-align:center}
-
-.card{
-  background:#fff;
-  padding:15px;
-  margin:10px 0;
-  border-radius:10px;
-  box-shadow:0 2px 5px rgba(0,0,0,0.1)
+body{
+  font-family:Arial;
+  margin:0;
+  background:#eef2f7;
 }
 
-input,textarea,button{
+header{
+  background:#2d89ef;
+  color:white;
+  padding:15px;
+  text-align:center;
+  font-size:20px;
+}
+
+.container{
+  padding:15px;
+}
+
+.card{
+  background:white;
+  padding:15px;
+  margin:10px 0;
+  border-radius:12px;
+  box-shadow:0 3px 8px rgba(0,0,0,0.1);
+}
+
+input,textarea,select,button{
   width:100%;
-  margin:5px 0;
+  margin:6px 0;
   padding:10px;
-  border-radius:5px;
-  border:1px solid #ccc
+  border-radius:8px;
+  border:1px solid #ccc;
 }
 
 button{
   background:#2d89ef;
   color:white;
   border:none;
+  cursor:pointer;
 }
 
-#admin,#padre{display:none}
+button:hover{
+  background:#1b5fa7;
+}
+
+.hidden{display:none}
+
+.badge{
+  background:#2d89ef;
+  color:white;
+  padding:3px 8px;
+  border-radius:6px;
+  font-size:12px;
+}
 </style>
 </head>
 
 <body>
 
-<h2>📚 Intranet Escolar</h2>
+<header>📚 Intranet Escolar</header>
 
-<button onclick="mostrar('admin')">Docente</button>
-<button onclick="mostrar('padre')">Padre</button>
+<div class="container">
 
-<!-- ADMIN -->
-<div id="admin">
-<h3>Panel Docente</h3>
+<!-- MENU -->
+<div id="menu">
+  <button onclick="mostrar('docente')">👨‍🏫 Docente</button>
+  <button onclick="mostrar('padre')">👨‍👩‍👧 Padres</button>
+</div>
 
-<input id="clave" type="password" placeholder="Contraseña">
+<!-- DOCENTE -->
+<div id="docente" class="hidden">
+
+<div class="card">
+<h3>Acceso Docente</h3>
+<input type="password" id="clave" placeholder="Contraseña">
 <button onclick="login()">Ingresar</button>
+</div>
 
-<div id="panelAdmin" style="display:none">
-<h4>Nuevo Comunicado</h4>
+<div id="panelAdmin" class="hidden">
 
+<div class="card">
+<h3>Nuevo Comunicado</h3>
 <input id="titulo" placeholder="Título">
 <textarea id="mensaje" placeholder="Mensaje"></textarea>
-<input id="grado" placeholder="Grado">
+
+<select id="grado">
+<option value="">Seleccionar grado</option>
+<option>Inicial</option>
+<option>Primaria</option>
+<option>Secundaria</option>
+</select>
 
 <button onclick="guardarComunicado()">Publicar</button>
 </div>
+
+</div>
 </div>
 
-<!-- PADRE -->
-<div id="padre">
-<h3>Padres</h3>
+<!-- PADRES -->
+<div id="padre" class="hidden">
 
-<input id="dni" placeholder="Ingrese DNI">
+<div class="card">
+<h3>Acceso Padres</h3>
+<input id="dni" placeholder="DNI">
+<select id="gradoPadre">
+<option value="">Seleccionar grado</option>
+<option>Inicial</option>
+<option>Primaria</option>
+<option>Secundaria</option>
+</select>
+
 <button onclick="cargar()">Ver Comunicados</button>
+</div>
 
 <div id="lista"></div>
+
+</div>
+
 </div>
 
 <script>
-const API = "https://script.google.com/macros/s/AKfycbyaQNJOxGB5unVzZ95P30PGVK5gkG_XIcDM1iScDuqCeFrBsr9HRi0V9qH9_xkVGF0wqA/exec";
+const API = "https://script.google.com/macros/s/AKfycbyNn2Wn7XtbWeHX-fZqYIs6Peoy2KsKb33LBGQsNrXQhxgeUdv6547vGNnCadUQcvwN5w/exec";
 
-function mostrar(tipo){
-  document.getElementById("admin").style.display="none";
-  document.getElementById("padre").style.display="none";
-  document.getElementById(tipo).style.display="block";
+// navegación
+function mostrar(id){
+  document.getElementById("docente").classList.add("hidden");
+  document.getElementById("padre").classList.add("hidden");
+  document.getElementById(id).classList.remove("hidden");
 }
 
+// login simple
 function login(){
-  if(document.getElementById("clave").value==="1234"){
-    document.getElementById("panelAdmin").style.display="block";
+  if(clave.value==="1234"){
+    panelAdmin.classList.remove("hidden");
   }else{
     alert("Clave incorrecta");
   }
 }
 
+// guardar comunicado
 function guardarComunicado(){
-  const data = {
-    action:"guardarComunicado",
-    titulo:titulo.value,
-    mensaje:mensaje.value,
-    grado:grado.value
-  };
+
+  if(!titulo.value || !mensaje.value || !grado.value){
+    alert("Completa todos los campos");
+    return;
+  }
 
   fetch(API,{
     method:"POST",
-    body:JSON.stringify(data)
-  }).then(()=>alert("Publicado"));
+    body:JSON.stringify({
+      action:"guardarComunicado",
+      titulo:titulo.value,
+      mensaje:mensaje.value,
+      grado:grado.value
+    })
+  })
+  .then(()=>alert("Comunicado publicado"));
 }
 
+// cargar comunicados
 function cargar(){
+
+  if(!dni.value || !gradoPadre.value){
+    alert("Completa datos");
+    return;
+  }
+
   fetch(API)
   .then(r=>r.json())
   .then(data=>{
+
     lista.innerHTML="";
-    data.forEach(c=>{
+
+    const filtrados = data.filter(c => c.grado === gradoPadre.value);
+
+    filtrados.forEach(c=>{
+
       lista.innerHTML+=`
       <div class="card">
-        <b>${c.titulo}</b><br>
-        ${c.mensaje}<br>
+        <span class="badge">${c.grado}</span>
+        <h4>${c.titulo}</h4>
+        <p>${c.mensaje}</p>
+
         <textarea id="r${c.id}" placeholder="Responder"></textarea>
         <button onclick="responder(${c.id})">Enviar</button>
-      </div>`;
+      </div>
+      `;
     });
+
   });
 }
 
+// responder
 function responder(id){
-  const dni = document.getElementById("dni").value;
   const texto = document.getElementById("r"+id).value;
+
+  if(!texto){
+    alert("Escribe una respuesta");
+    return;
+  }
 
   fetch(API,{
     method:"POST",
     body:JSON.stringify({
       action:"guardarRespuesta",
       idComunicado:id,
-      dni:dni,
+      dni:dni.value,
       respuesta:texto
     })
-  }).then(()=>alert("Respuesta enviada"));
+  })
+  .then(()=>alert("Respuesta enviada"));
 }
 </script>
 
