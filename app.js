@@ -1,9 +1,9 @@
-const API="https://script.google.com/macros/s/AKfycbzhabdY66pe7xG9mVkhFt0Gz-9P5s-KsjooeQpcvhsMjg3u-CqGnhCd2pO5HDz8EIlqJQ/exec";
+const API="https://script.google.com/macros/s/AKfycby-n0olfzQzJyuXEsX-lCOEZ6DXvWJeQt8neGje1-PQKRnWbijai87_RI0-WJZ4mjzRUA/exec";
 
 // LOGIN
 function login(){
 
-fetch(API+`?action=loginPadre&dni=${usuario.value}&password=${password.value}`)
+fetch(API+`?action=loginPadre&user=${usuario.value}&password=${password.value}`)
 .then(r=>r.json())
 .then(d=>{
 
@@ -22,18 +22,19 @@ start(x);
 // INICIO
 function start(u){
 localStorage.setItem("u",JSON.stringify(u));
+window.usuarioActual = u;
 
 loginDiv.style.display="none";
 panel.classList.remove("hidden");
 
 bienvenida.innerHTML="Bienvenido "+u.nombre;
 
-if(u.tipo=="padre") cargar(u);
-else docente(u);
+if(u.tipo=="padre") cargarPadre(u);
+else cargarDocente(u);
 }
 
 // PADRE
-function cargar(u){
+function cargarPadre(u){
 fetch(API+"?action=comunicados")
 .then(r=>r.json())
 .then(data=>{
@@ -46,14 +47,23 @@ contenido.innerHTML+=`
 <h4>${c.titulo}</h4>
 <p>${c.mensaje}</p>
 <textarea id="r${c.id}"></textarea>
-<button onclick="responder(${c.id},'${u.dni}')">Responder</button>
+<button onclick="responder(${c.id})">Responder</button>
 </div>`;
 });
+
+// cambiar clave
+contenido.innerHTML+=`
+<div class="card">
+<h4>Cambiar contraseña</h4>
+<input id="oldPass" type="password">
+<input id="newPass" type="password">
+<button onclick="cambiarPassword()">Actualizar</button>
+</div>`;
 });
 }
 
 // DOCENTE
-function docente(u){
+function cargarDocente(u){
 contenido.innerHTML=`
 <div class="card">
 <h4>Nuevo Comunicado</h4>
@@ -61,17 +71,16 @@ contenido.innerHTML=`
 <textarea id="mensaje"></textarea>
 <button onclick="publicar()">Publicar</button>
 
-<h4>Registrar Alumno</h4>
-<input id="dniA">
-<input id="nombreA">
-<input id="gradoA">
-<input id="seccionA">
-<button onclick="crear()">Crear</button>
+<h4>Crear Padre</h4>
+<input id="dniA" placeholder="DNI Alumno">
+<input id="nombreA" placeholder="Nombre Padre">
+<input id="userA" placeholder="Usuario">
+<input id="passA" placeholder="Contraseña">
+<button onclick="crearPadre()">Crear</button>
 
 <div id="respuestas"></div>
 <button onclick="verRespuestas()">Ver respuestas</button>
-</div>
-`;
+</div>`;
 window.doc=u;
 }
 
@@ -89,29 +98,45 @@ seccion:doc.seccion
 }).then(()=>alert("Publicado"));
 }
 
-function responder(id,dni){
+function responder(id){
 fetch(API,{
 method:"POST",
 body:JSON.stringify({
 action:"guardarRespuesta",
 idComunicado:id,
-dni:dni,
+usuario:usuarioActual.usuario,
 respuesta:document.getElementById("r"+id).value
 })
 }).then(()=>alert("Enviado"));
 }
 
-function crear(){
+function crearPadre(){
 fetch(API,{
 method:"POST",
 body:JSON.stringify({
-action:"crearAlumno",
-dni:dniA.value,
+action:"crearPadre",
+dniAlumno:dniA.value,
 nombre:nombreA.value,
-grado:gradoA.value,
-seccion:seccionA.value
+usuario:userA.value,
+password:passA.value
 })
-}).then(()=>alert("Alumno creado"));
+})
+.then(r=>r.json())
+.then(x=>alert(x.error||"Padre creado"));
+}
+
+function cambiarPassword(){
+fetch(API,{
+method:"POST",
+body:JSON.stringify({
+action:"cambiarPassword",
+usuario:usuarioActual.usuario,
+oldPass:oldPass.value,
+newPass:newPass.value
+})
+})
+.then(r=>r.json())
+.then(x=>alert(x.error||"Actualizado"));
 }
 
 function verRespuestas(){
@@ -122,7 +147,7 @@ respuestas.innerHTML="";
 data.forEach(r=>{
 respuestas.innerHTML+=`
 <div class="card">
-<b>${r.nombre}</b><br>${r.respuesta}
+<b>${r.usuario}</b><br>${r.respuesta}
 </div>`;
 });
 });
