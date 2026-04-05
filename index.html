@@ -2,24 +2,26 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Intranet</title>
+<title>Intranet Escolar</title>
 <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
 
-<header>Intranet Escolar</header>
+<header>📚 Intranet Escolar</header>
 
 <div class="container">
 
 <div id="loginDiv" class="card">
+<h3>Ingreso</h3>
 <input id="usuario" placeholder="Usuario o DNI">
-<input id="password" type="password">
+<input id="password" type="password" placeholder="Contraseña">
 <button onclick="login()">Ingresar</button>
 </div>
 
 <div id="panel" class="hidden">
 <h3 id="bienvenida"></h3>
-<button onclick="logout()">Salir</button>
+<button onclick="logout()">Cerrar sesión</button>
 <div id="contenido"></div>
 </div>
 
