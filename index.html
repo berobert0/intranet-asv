@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Intranet Escolar PRO</title>
+<title>Intranet Primaria</title>
 
 <style>
 body{font-family:Arial;background:#eef2f7;margin:0}
@@ -11,24 +11,16 @@ header{background:#2d89ef;color:white;padding:15px;text-align:center}
 .container{padding:15px}
 
 .card{
-  background:white;
-  padding:15px;
-  margin:10px 0;
-  border-radius:10px;
-  box-shadow:0 2px 6px rgba(0,0,0,0.1)
+background:white;
+padding:15px;
+margin:10px 0;
+border-radius:10px;
 }
 
-input,textarea,select,button{
-  width:100%;
-  padding:10px;
-  margin:5px 0;
-  border-radius:6px;
-}
-
-button{
-  background:#2d89ef;
-  color:white;
-  border:none;
+input,textarea,button{
+width:100%;
+padding:10px;
+margin:5px 0;
 }
 
 .hidden{display:none}
@@ -37,147 +29,134 @@ button{
 
 <body>
 
-<header>📚 Intranet Escolar PRO</header>
+<header>📚 Intranet Primaria</header>
 
 <div class="container">
 
-<!-- LOGIN PADRES -->
+<!-- LOGIN PADRE -->
 <div id="loginPadre" class="card">
-<h3>Ingreso Padres</h3>
+<h3>Padres</h3>
 <input id="dni" placeholder="DNI">
-<button onclick="login()">Ingresar</button>
+<input id="password" type="password" placeholder="Contraseña">
+<button onclick="loginPadre()">Ingresar</button>
 </div>
 
-<!-- PANEL PADRE -->
 <div id="panelPadre" class="hidden">
 <h3 id="nombre"></h3>
+<button onclick="logout()">Salir</button>
 <div id="lista"></div>
 </div>
 
 <!-- DOCENTE -->
 <div class="card">
-<h3>Panel Docente</h3>
-<input type="password" id="clave" placeholder="Clave">
+<h3>Docente</h3>
+<input id="userDoc" placeholder="Usuario">
+<input id="passDoc" type="password" placeholder="Contraseña">
 <button onclick="loginDoc()">Ingresar</button>
 
 <div id="admin" class="hidden">
-
 <input id="titulo" placeholder="Título">
-<textarea id="mensaje" placeholder="Mensaje"></textarea>
-<input id="archivo" placeholder="Link PDF o imagen">
-<select id="grado">
-<option>Primaria</option>
-<option>Secundaria</option>
-</select>
-
+<textarea id="mensaje"></textarea>
+<input id="archivo" placeholder="Link archivo">
 <button onclick="publicar()">Publicar</button>
-
-<button onclick="verRespuestas()">Ver Respuestas</button>
-
+<button onclick="verRespuestas()">Ver respuestas</button>
 <div id="respuestas"></div>
-
 </div>
 </div>
 
 </div>
 
 <script>
-const API="https://script.google.com/macros/s/AKfycbyNn2Wn7XtbWeHX-fZqYIs6Peoy2KsKb33LBGQsNrXQhxgeUdv6547vGNnCadUQcvwN5w/exec";
+const API="https://script.google.com/macros/s/AKfycbyit2_SosKuCPn0mH5WC6IIjMMI9qgHT4HD1YDiDq9qoNSyNf9zktVgXwHDkTzP5kck8A/exec";
 
 // LOGIN PADRE
-function login(){
-  fetch(API+"?action=loginPadre&dni="+dni.value)
-  .then(r=>r.json())
-  .then(data=>{
-    if(data.error){
-      alert("No registrado");
-      return;
-    }
+function loginPadre(){
+fetch(API+`?action=loginPadre&dni=${dni.value}&password=${password.value}`)
+.then(r=>r.json())
+.then(d=>{
+if(d.error){alert("Error");return;}
 
-    nombre.innerHTML="Bienvenido "+data.nombre;
-    loginPadre.classList.add("hidden");
-    panelPadre.classList.remove("hidden");
+localStorage.setItem("user",JSON.stringify(d));
+nombre.innerHTML="Bienvenido "+d.nombre;
 
-    cargar(data.grado, data.dni);
-  });
+loginPadreDiv.style.display="none";
+panelPadre.classList.remove("hidden");
+
+cargar(d.grado,d.seccion,d.dni);
+});
 }
 
-// CARGAR COMUNICADOS
-function cargar(gradoUser,dniUser){
-  fetch(API+"?action=comunicados")
-  .then(r=>r.json())
-  .then(data=>{
-
-    lista.innerHTML="";
-
-    data.filter(c=>c.grado==gradoUser)
-    .forEach(c=>{
-
-      lista.innerHTML+=`
-      <div class="card">
-      <h4>${c.titulo}</h4>
-      <p>${c.mensaje}</p>
-
-      ${c.archivo ? `<a href="${c.archivo}" target="_blank">📎 Ver archivo</a>`:""}
-
-      <textarea id="r${c.id}" placeholder="Responder"></textarea>
-      <button onclick="responder(${c.id},'${dniUser}')">Enviar</button>
-      </div>`;
-    });
-
-  });
+// CARGAR
+function cargar(g,s,dni){
+fetch(API+"?action=comunicados")
+.then(r=>r.json())
+.then(data=>{
+lista.innerHTML="";
+data.filter(c=>c.grado==g && c.seccion==s)
+.forEach(c=>{
+lista.innerHTML+=`
+<div class="card">
+<h4>${c.titulo}</h4>
+<p>${c.mensaje}</p>
+<textarea id="r${c.id}"></textarea>
+<button onclick="resp(${c.id},'${dni}')">Enviar</button>
+</div>`;
+});
+});
 }
 
 // RESPONDER
-function responder(id,dni){
-  const texto=document.getElementById("r"+id).value;
-
-  fetch(API,{
-    method:"POST",
-    body:JSON.stringify({
-      action:"guardarRespuesta",
-      idComunicado:id,
-      dni:dni,
-      respuesta:texto
-    })
-  }).then(()=>alert("Enviado"));
+function resp(id,dni){
+fetch(API,{
+method:"POST",
+body:JSON.stringify({
+action:"guardarRespuesta",
+idComunicado:id,
+dni:dni,
+respuesta:document.getElementById("r"+id).value
+})
+}).then(()=>alert("Enviado"));
 }
 
-// DOCENTE LOGIN
+// DOCENTE
 function loginDoc(){
-  if(clave.value==="1234"){
-    admin.classList.remove("hidden");
-  }
+fetch(API+`?action=loginDocente&user=${userDoc.value}&pass=${passDoc.value}`)
+.then(r=>r.json())
+.then(d=>{
+if(d.error){alert("Error");return;}
+window.doc=d;
+admin.classList.remove("hidden");
+});
 }
 
-// PUBLICAR
 function publicar(){
-  fetch(API,{
-    method:"POST",
-    body:JSON.stringify({
-      action:"guardarComunicado",
-      titulo:titulo.value,
-      mensaje:mensaje.value,
-      grado:grado.value,
-      archivo:archivo.value
-    })
-  }).then(()=>alert("Publicado"));
+fetch(API,{
+method:"POST",
+body:JSON.stringify({
+action:"guardarComunicado",
+titulo:titulo.value,
+mensaje:mensaje.value,
+grado:doc.grado,
+seccion:doc.seccion,
+archivo:archivo.value
+})
+}).then(()=>alert("Publicado"));
 }
 
-// VER RESPUESTAS
 function verRespuestas(){
-  fetch(API+"?action=respuestas")
-  .then(r=>r.json())
-  .then(data=>{
-    respuestas.innerHTML="<h4>Respuestas:</h4>";
-    data.forEach(r=>{
-      respuestas.innerHTML+=`
-      <div class="card">
-      DNI: ${r[2]}<br>
-      ${r[3]}
-      </div>`;
-    });
-  });
+fetch(API+"?action=respuestas")
+.then(r=>r.json())
+.then(data=>{
+respuestas.innerHTML="";
+data.forEach(r=>{
+respuestas.innerHTML+=`<div class="card">${r[2]}: ${r[3]}</div>`;
+});
+});
+}
+
+function logout(){
+localStorage.removeItem("user");
+location.reload();
 }
 </script>
 
