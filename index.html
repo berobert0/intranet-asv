@@ -3,130 +3,151 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Intranet Primaria</title>
+<title>Intranet Escolar PRO</title>
 
 <style>
-body{font-family:Arial;background:#eef2f7;margin:0}
-header{background:#2d89ef;color:white;padding:15px;text-align:center}
-.container{padding:15px}
+body{margin:0;font-family:Arial;background:#eef2f7}
+header{background:#2d89ef;color:white;padding:15px;text-align:center;font-size:20px}
+
+.container{padding:15px;max-width:500px;margin:auto}
 
 .card{
 background:white;
 padding:15px;
 margin:10px 0;
-border-radius:10px;
+border-radius:12px;
+box-shadow:0 3px 8px rgba(0,0,0,0.1)
 }
 
 input,textarea,button{
 width:100%;
 padding:10px;
 margin:5px 0;
+border-radius:8px;
+border:1px solid #ccc;
 }
 
+button{background:#2d89ef;color:white;border:none}
+button:hover{background:#1b5fa7}
+
 .hidden{display:none}
+
+.badge{
+background:#2d89ef;
+color:white;
+padding:4px 8px;
+border-radius:6px;
+font-size:12px;
+}
 </style>
 </head>
 
 <body>
 
-<header>📚 Intranet Primaria</header>
+<header>📚 Intranet Escolar</header>
 
 <div class="container">
 
-<!-- LOGIN PADRE -->
-<div id="loginPadre" class="card">
-<h3>Padres</h3>
-<input id="dni" placeholder="DNI">
+<!-- LOGIN -->
+<div id="login" class="card">
+<h3>Ingreso</h3>
+<input id="usuario" placeholder="DNI o Usuario">
 <input id="password" type="password" placeholder="Contraseña">
-<button onclick="loginPadre()">Ingresar</button>
+<button onclick="login()">Ingresar</button>
 </div>
 
-<div id="panelPadre" class="hidden">
-<h3 id="nombre"></h3>
-<button onclick="logout()">Salir</button>
-<div id="lista"></div>
+<!-- PANEL -->
+<div id="panel" class="hidden">
+
+<h3 id="bienvenida"></h3>
+<button onclick="logout()">Cerrar sesión</button>
+
+<div id="contenido"></div>
+
 </div>
 
-<!-- DOCENTE -->
+</div>
+
+<script>
+const API="https://script.google.com/macros/s/AKfycbyKVIhWHTaKxIDu1RMGkyaBk_dY0Ur-a-t8l52NSWel3tmd_TsSa-br40DFsgWF2kDCeg/exec";
+
+// LOGIN GENERAL
+function login(){
+
+fetch(API+`?action=loginPadre&dni=${usuario.value}&password=${password.value}`)
+.then(r=>r.json())
+.then(data=>{
+
+if(!data.error){
+iniciarSesion(data);
+return;
+}
+
+// probar docente
+fetch(API+`?action=loginDocente&user=${usuario.value}&pass=${password.value}`)
+.then(r=>r.json())
+.then(d=>{
+if(d.error){alert("Datos incorrectos");return;}
+iniciarSesion(d);
+});
+
+});
+}
+
+// SESIÓN
+function iniciarSesion(user){
+localStorage.setItem("user",JSON.stringify(user));
+
+login.classList.add("hidden");
+panel.classList.remove("hidden");
+
+bienvenida.innerHTML="Bienvenido "+user.nombre;
+
+if(user.tipo==="padre"){
+cargarPadre(user);
+}else{
+cargarDocente(user);
+}
+}
+
+// PADRE
+function cargarPadre(u){
+fetch(API+"?action=comunicados")
+.then(r=>r.json())
+.then(data=>{
+
+contenido.innerHTML="";
+
+data.filter(c=>c.grado==u.grado && c.seccion==u.seccion)
+.forEach(c=>{
+
+contenido.innerHTML+=`
 <div class="card">
-<h3>Docente</h3>
-<input id="userDoc" placeholder="Usuario">
-<input id="passDoc" type="password" placeholder="Contraseña">
-<button onclick="loginDoc()">Ingresar</button>
+<span class="badge">${c.grado}° ${c.seccion}</span>
+<h4>${c.titulo}</h4>
+<p>${c.mensaje}</p>
 
-<div id="admin" class="hidden">
-<input id="titulo" placeholder="Título">
+<textarea id="r${c.id}" placeholder="Responder"></textarea>
+<button onclick="responder(${c.id},'${u.dni}')">Enviar</button>
+</div>`;
+});
+});
+}
+
+// DOCENTE
+function cargarDocente(u){
+contenido.innerHTML=`
+<div class="card">
+<h4>Nuevo Comunicado</h4>
+<input id="titulo">
 <textarea id="mensaje"></textarea>
 <input id="archivo" placeholder="Link archivo">
 <button onclick="publicar()">Publicar</button>
 <button onclick="verRespuestas()">Ver respuestas</button>
 <div id="respuestas"></div>
 </div>
-</div>
-
-</div>
-
-<script>
-const API="https://script.google.com/macros/s/AKfycbyit2_SosKuCPn0mH5WC6IIjMMI9qgHT4HD1YDiDq9qoNSyNf9zktVgXwHDkTzP5kck8A/exec";
-
-// LOGIN PADRE
-function loginPadre(){
-fetch(API+`?action=loginPadre&dni=${dni.value}&password=${password.value}`)
-.then(r=>r.json())
-.then(d=>{
-if(d.error){alert("Error");return;}
-
-localStorage.setItem("user",JSON.stringify(d));
-nombre.innerHTML="Bienvenido "+d.nombre;
-
-loginPadreDiv.style.display="none";
-panelPadre.classList.remove("hidden");
-
-cargar(d.grado,d.seccion,d.dni);
-});
-}
-
-// CARGAR
-function cargar(g,s,dni){
-fetch(API+"?action=comunicados")
-.then(r=>r.json())
-.then(data=>{
-lista.innerHTML="";
-data.filter(c=>c.grado==g && c.seccion==s)
-.forEach(c=>{
-lista.innerHTML+=`
-<div class="card">
-<h4>${c.titulo}</h4>
-<p>${c.mensaje}</p>
-<textarea id="r${c.id}"></textarea>
-<button onclick="resp(${c.id},'${dni}')">Enviar</button>
-</div>`;
-});
-});
-}
-
-// RESPONDER
-function resp(id,dni){
-fetch(API,{
-method:"POST",
-body:JSON.stringify({
-action:"guardarRespuesta",
-idComunicado:id,
-dni:dni,
-respuesta:document.getElementById("r"+id).value
-})
-}).then(()=>alert("Enviado"));
-}
-
-// DOCENTE
-function loginDoc(){
-fetch(API+`?action=loginDocente&user=${userDoc.value}&pass=${passDoc.value}`)
-.then(r=>r.json())
-.then(d=>{
-if(d.error){alert("Error");return;}
-window.doc=d;
-admin.classList.remove("hidden");
-});
+`;
+window.doc=u;
 }
 
 function publicar(){
@@ -143,13 +164,29 @@ archivo:archivo.value
 }).then(()=>alert("Publicado"));
 }
 
+function responder(id,dni){
+fetch(API,{
+method:"POST",
+body:JSON.stringify({
+action:"guardarRespuesta",
+idComunicado:id,
+dni:dni,
+respuesta:document.getElementById("r"+id).value
+})
+}).then(()=>alert("Enviado"));
+}
+
 function verRespuestas(){
 fetch(API+"?action=respuestas")
 .then(r=>r.json())
 .then(data=>{
 respuestas.innerHTML="";
 data.forEach(r=>{
-respuestas.innerHTML+=`<div class="card">${r[2]}: ${r[3]}</div>`;
+respuestas.innerHTML+=`
+<div class="card">
+<b>${r.nombre}</b><br>
+${r.respuesta}
+</div>`;
 });
 });
 }
@@ -157,6 +194,12 @@ respuestas.innerHTML+=`<div class="card">${r[2]}: ${r[3]}</div>`;
 function logout(){
 localStorage.removeItem("user");
 location.reload();
+}
+
+// AUTO LOGIN
+window.onload=()=>{
+const user=JSON.parse(localStorage.getItem("user"));
+if(user) iniciarSesion(user);
 }
 </script>
 
